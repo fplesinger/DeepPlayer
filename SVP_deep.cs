@@ -15,6 +15,13 @@ using System.Diagnostics;
 
 namespace plugins_deepplayer
 {
+    /// <summary>
+    /// This class describes the whole plugin. SignalPlant builds an instance of this class when a user needs to do it. 
+    /// Technically, it is a user control docked in a frame (defined and created by a SignalPlant
+    /// 
+    /// Author: F. Plesinger, AIMT - ISI of the CAS, Brno, Czech Republic (2021-2022)
+    /// 
+    /// </summary>
     public partial class SVP_DEEP : UserControl
     {
 
@@ -25,7 +32,6 @@ namespace plugins_deepplayer
         string marksFilter = ""; //--filter, deffining marks selection
         List<selectionMember> marksList; //---array of linked marks
 
-        Object result = null; //---only some result for ilustrative purpose....
 
         ManualResetEvent COMRE = new ManualResetEvent(false); //---manual reset event. Important when this plugin generates a COMMAND too. Otherwise this can be deleted.
 
@@ -57,35 +63,51 @@ namespace plugins_deepplayer
         private readonly string noCudaCNTS= "No CUDA drivers found.";
 
         int specMess = -1;
-        
+        private int currentOutputHead=0;
 
+        /// <summary>
+        /// Default SP plugin method
+        /// </summary>
+        /// <returns>String with developer info</returns>
         public string getDeveloperInfo()
         {
-            return "F. Plesinger/A. Ivora/P. Nejedly - Artificial Intelligence and Medical Technologies, Institute of Scientific Instruments of the CAS, Brno, Czech Republic";
+            return "F. Plesinger/A. Ivora/P. Nejedly - Artificial Intelligence and Medical Technologies, Institute of Scientific Instruments of the CAS, Brno, Czech Republic, 2021-2022";
         }
 
+        /// <summary>
+        /// Default SP plugin method
+        /// </summary>
+        /// <returns>Returns plugin description </returns>
         public string getDescription()
         {
-            return "Plugin to run deep-learning models inference"; //----enter description for your plugin
+
+            return "Plugin to run deep-learning models inference";// +vi; //----enter description for your plugin. Plugin version info is already displayed by SignalPlant
         }
 
+        /// <summary>
+        /// Default SP plugin method. It is required to select submenu in SP/Mainmenu/Plugins is created during SP launch
+        /// </summary>
+        /// <returns>String with SP plugin category</returns>
         public string getCategory()
         {
             return "Generate data"; //---set category in plugins menu. If it does not exists, new category will be created
         }
                           
 
+        /// <summary>
+        /// Default SP plugin method. Controls the name of menu item in SP/Mainmenu/Plugins
+        /// </summary>
+        /// <returns>String plugin name</returns>
         public string getName()
         {
             return "Deep Player";        //---plugin name, visible in Plugins menu
         }
 
+        /// <summary>
+        /// This is called from signalViewer, when doing RefreshAllPluginForms()
+        /// </summary>
         public void doExternalRefresh()
         {
-            /*
-             *  This is calle from signalViewer, when doing RefreshAllPluginForms()
-             */
-
             if (chbUpdateAuto.Checked)
             {
                 refrControls();
@@ -94,6 +116,10 @@ namespace plugins_deepplayer
 
         }
 
+        /// <summary>
+        /// Seeks for a place where CUDA drivers are installed
+        /// </summary>
+        /// <returns>returns CUDA drivers location </returns>
         private string Get_CUDA_DriversDirectory()
         {
             string softwareKeyName = string.Empty;
@@ -120,6 +146,10 @@ namespace plugins_deepplayer
             return homeDirectory;
         }
 
+        /// <summary>
+        /// Default SP plugin method. Called when user select a preset in parent plugin form. 
+        /// Used only when presets are used inside a plugin. They are not in the current DeepPlayer version.
+        /// </summary>
         public void presetBeforeLoaded()
         {
             /*
@@ -127,6 +157,9 @@ namespace plugins_deepplayer
            */
         }
 
+        /// <summary>
+        /// Default SP plugin method. Called after preset was loaded. Not used in current DeepPlayer version.
+        /// </summary>
         public void presetLoaded()
         {
             /*
@@ -139,7 +172,7 @@ namespace plugins_deepplayer
 
 
         /*
-         //--When you need to have a command for scripts too you have to implement these two functions
+         //--When you need to have a command for scripts too, you have to implement these two methods:
          * 
          public string COMMAND_DEEPPLAYER(string parameters) //---change to COMMAND_SOMETHING if you need to name new command as "SOMETHING".
          {
@@ -184,13 +217,12 @@ namespace plugins_deepplayer
 
        */
 
-
+        /// <summary>
+        /// Called when SignalPlant needs to refresh DeepPlayer state (for example, during zoom in/out)
+        /// </summary>
         private void refrControls()
         {
-            /*
-             * This function is called for refreshing a plugin form SignalPlant. 
-             
-             * */
+
 
             btChannels.Text = "";
             if (linkedChannels.Count == 0) btChannels.Text = "Drag a channel here or click";
@@ -208,6 +240,9 @@ namespace plugins_deepplayer
 
         }
 
+        /// <summary>
+        /// Method to prepare a preview of model outputs
+        /// </summary>
         private void doPreviewWork()
         {
 
@@ -216,11 +251,13 @@ namespace plugins_deepplayer
             pbx.Refresh();
         }
 
+        /// <summary>
+        /// Event when a user drags something (usually a channel from a SignalPlant) to a "Channels" button.
+        /// </summary>
+        /// <param name="sender">Who called this event</param>
+        /// <param name="e">drag and drop parameters</param>
         private void btChannels_DragDrop(object sender, DragEventArgs e)
         {
-            /*
-             *This method add dragged channel from SignalPlant to linkedchannels
-             */
             string s = e.Data.GetData(DataFormats.Text).ToString();
 
             try
@@ -237,6 +274,11 @@ namespace plugins_deepplayer
             }
         }
 
+        /// <summary>
+        /// Standard control event. Occurs, when a user drags something and a mouse pointer enters target area
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btChannels_DragEnter(object sender, DragEventArgs e)
         {
             string s = e.Data.GetData(DataFormats.Text).ToString();
@@ -249,6 +291,11 @@ namespace plugins_deepplayer
                 e.Effect = DragDropEffects.None;
         }
 
+        /// <summary>
+        /// Method to computer standard deviation
+        /// </summary>
+        /// <param name="values">Input numerical array</param>
+        /// <returns>Standard deviation</returns>
         public float getStd(float[] values)
         {
             float avg = values.Average();
@@ -257,6 +304,12 @@ namespace plugins_deepplayer
             return denominator > 0.0 ? (float)(Math.Sqrt(sum / denominator)) : -1;
         }
 
+        /// <summary>
+        /// Control standard event when a user clicks the button - here, the channels select button. 
+        /// It opens SignalPlant common dialog window to select from available channels (i.e. signals)
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btChannels_Click(object sender, EventArgs e)
         {
             signalViewer.selectChannelForm sc = new signalViewer.selectChannelForm();
@@ -274,7 +327,11 @@ namespace plugins_deepplayer
             }
         }
 
-
+        /// <summary>
+        /// Happens when a user click on a Process button. If the process background worker is idle, than it starts.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btProcess_Click(object sender, EventArgs e)
         {
             if (!bgw.IsBusy)
@@ -289,6 +346,10 @@ namespace plugins_deepplayer
             refrControls();
         }
 
+        /// <summary>
+        /// Class constructor. Sets default filter for marks (could be removed since Deep Player does not need them).
+        /// Also, does initializes components and calls their first refresh.
+        /// </summary>
         public SVP_DEEP()
         {
             InitializeComponent();
@@ -300,13 +361,27 @@ namespace plugins_deepplayer
             refrControls();
         }
 
+        /// <summary>
+        /// Called from background worker to report progress in main picturebox (pbx) to inform the user.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void bgw_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
             bgwPercentDone = e.ProgressPercentage;
             pbx.Refresh();
         }
 
-
+        /// <summary>
+        /// Method to draw dotted/dashed vertical line since .NET does not know how.
+        /// </summary>
+        /// <param name="gr">Graphic context to draw into</param>
+        /// <param name="x">X location</param>
+        /// <param name="y0">Y start</param>
+        /// <param name="y1">Y end</param>
+        /// <param name="spacing">Spacing between line segments</param>
+        /// <param name="segheight">Height of segments</param>
+        /// <param name="pn">Pen for the lined</param>
         private void drawDottedVertline(Graphics gr, int x,int y0,int y1, int spacing, int segheight, Pen pn)
         {
 
@@ -315,6 +390,11 @@ namespace plugins_deepplayer
 
         }
 
+        /// <summary>
+        /// Main method to draw signal inputs/outpus and inference windows at the main picture box
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void pbx_Paint(object sender, PaintEventArgs e)
         {
               //e.Graphics.DrawString("System:"+System.Environment.OSVersion.Platform.ToString()+ " | 64bit system:"+System.Environment.Is64BitOperatingSystem+" | 64bit process:"+System.Environment.Is64BitProcess, SystemFonts.DefaultFont, Brushes.Black, 4,pbx.Height-20);
@@ -428,7 +508,14 @@ namespace plugins_deepplayer
             {
 
                 graphPanel sch = linkedChannels[0];
+                if (sch.dataCache==null)
+                {
+                    e.Graphics.Clear(Color.White);
+                    e.Graphics.DrawString("Channel set was probably changed. Please, relink channels", SystemFonts.DefaultFont, Brushes.Black, pbx.Width / 2, pbx.Height / 2, mainView.sfc);
+                    return;
+                }
                 dataCacheLevel dc = sch.dataCache[sch.currentDataChace];
+
 
                 int ld = graphPanel.leftI;
                 int rd = graphPanel.rightI;
@@ -466,6 +553,7 @@ namespace plugins_deepplayer
 
                     if (outProbsPreview.Count == 1)
                     {
+
                         float mx = outProbsPreview[0].Max();
                         float mn = outProbsPreview[0].Min();
 
@@ -518,6 +606,7 @@ namespace plugins_deepplayer
                                 if (Single.IsNaN(nums[n]))
                                     {
                                     anyNan = true;
+                                    e.Graphics.DrawString("Probability array contains NAN value", SystemFonts.DefaultFont, Brushes.Black, pbx.Width / 2, pbx.Height / 2,mainView.sfc);
                                     return;
 
                                 }
@@ -789,6 +878,11 @@ namespace plugins_deepplayer
 
         }
 
+        /// <summary>
+        /// Method mapping values in range 0-1 to a range 0-255
+        /// </summary>
+        /// <param name="v">probability 0-1</param>
+        /// <returns>integer 0-255</returns>
         private int convert01ValToAlpha(float v)
         {
             float alpha = v;
@@ -798,6 +892,11 @@ namespace plugins_deepplayer
             return alphaRat;
         }
 
+        /// <summary>
+        /// Method of the background worker who processes the whole signal when a user clicks the "Process button"
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void bgw_DoWork(object sender, DoWorkEventArgs e)
         {
 
@@ -958,8 +1057,9 @@ namespace plugins_deepplayer
                         //ptimes.Add(sw.ElapsedMilliseconds);
 
                         //Console.WriteLine("Inference done");
-                        var tns = output.First().AsTensor<float>();
 
+                        //var tns = output.First().AsTensor<float>();
+                        var tns = output.ElementAt(currentOutputHead).AsTensor<float>();
                         float[] arr = tns.ToArray<float>();
 
                         if (chbDeSTD.Checked && numOutputChannels == 1)
@@ -987,6 +1087,27 @@ namespace plugins_deepplayer
                             }
                             else
                                 Array.Copy(arr, startPos, locArr, 0, locArr.Length);
+
+
+
+                            //when DL model output is shorter then signal
+                            if (numSamples > numOutputChannels && numSamples < signal.Length)
+                            {
+                                float rat = signal.Length / (float)numSamples;
+                                int addSamples = (int)(rat + 1);
+
+                                float[] backArr = (float[])locArr.Clone();
+
+                                locArr = new float[ws];
+
+                                for (int s = 0; s < backArr.Length; s++)
+                                    for (int a = 0; a <= addSamples; a++)
+                                    {
+                                        int realPos = (int)(s * rat) + a;
+                                        if (realPos < ws)
+                                            locArr[realPos] = backArr[s];
+                                    }
+                            }
 
                             outProbsLocal.Add(locArr);
                         }
@@ -1151,8 +1272,6 @@ namespace plugins_deepplayer
                 }
 
                 mv.rebuiltAndRedrawAll();
-                //mainView.actualizePluginForms();
-
                 mv.safe_refresh_channel_list();
 
 
@@ -1165,16 +1284,16 @@ namespace plugins_deepplayer
             }
 
 
-          /**  for (int i = 0; i < linkedChannels[0].dataCache[0].data.Count; i++)
-            {
-                if (i % 10000 == 0)
-                    bgw.ReportProgress(50); //---report progress at least time to time
-            }
-          **/
 
             COMRE.Set(); //---this is important only when implementing a command
         }
 
+
+        /// <summary>
+        /// Called when the background worker finishes processing linked signals in their whole length
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void bgw_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             //refrControls();
@@ -1195,6 +1314,11 @@ namespace plugins_deepplayer
 
         }
 
+        /// <summary>
+        /// Event after a user click on button for marks selection. Not used in DeepPlayer now.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btMarks_Click(object sender, EventArgs e)
         {
             signalViewer.selectMarkersForm sc = new signalViewer.selectMarkersForm();
@@ -1208,6 +1332,11 @@ namespace plugins_deepplayer
             }
         }
 
+        /// <summary>
+        /// A method called during loading this plugin by SignalPlant
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void SVP_plugin_v3_Load(object sender, EventArgs e)
         {
             if (this.ParentForm != null)
@@ -1237,11 +1366,12 @@ namespace plugins_deepplayer
             }
         }
 
-        private void topPanel_Paint(object sender, PaintEventArgs e)
-        {
 
-        }
-
+        /// <summary>
+        /// Event called when the user click on a button to load ONNX model into DeepPlayer
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void button1_Click(object sender, EventArgs e)
         {
             if (ofd_onnx.ShowDialog() == DialogResult.OK)
@@ -1253,6 +1383,10 @@ namespace plugins_deepplayer
             }
         }
 
+        /// <summary>
+        /// Method to load the ONNX file
+        /// </summary>
+        /// <param name="flnm"></param>
         private void loadONNX(string flnm)
         {
             if (flnm.Length < 4)
@@ -1266,12 +1400,17 @@ namespace plugins_deepplayer
             pbx.Refresh();
         }
 
+        /// <summary>
+        /// Method refreshing metadata from ONNX model
+        /// </summary>
         private void RefreshMetadata()
         {
             if (infs == null)
             {
                 lmi.Text = "---";
                 lmo.Text = "---";
+                btHeadLeft.Visible = false;
+                btHeadRight.Visible = false;
                 return;
             }
 
@@ -1284,7 +1423,15 @@ namespace plugins_deepplayer
                 int[] inputDims = infs.InputMetadata.Values.ToList()[0].Dimensions;
 
                 //int[] outputDims = infs.OutputMetadata["output"].Dimensions;
-                int[] outputDims = infs.OutputMetadata.Values.ToList()[0].Dimensions;
+                int numOutpuHeads = infs.OutputMetadata.Count;
+
+                if (numOutpuHeads>1)
+                {
+                    btHeadRight.Visible = true;
+                    btHeadLeft.Visible = true;
+                }
+
+                int[] outputDims = infs.OutputMetadata.Values.ToList()[currentOutputHead].Dimensions;
 
                 string producerName = infs.ModelMetadata.ProducerName;
                 string descrition = infs.ModelMetadata.Description;
@@ -1331,6 +1478,8 @@ namespace plugins_deepplayer
                 if (outputDims.Length == 4)
                     lmo.Text = outputDims[0] + " x " + outputDims[1] + " x " + outputDims[2]+ " x "+outputDims[3];
 
+                if (numOutpuHeads > 1)
+                    lmo.Text = lmo.Text+" (head " + (currentOutputHead+1) + "/" + numOutpuHeads + ")";
 
                 lmdom.Text = domain;
                 lmDesc.Text = descrition;
@@ -1409,6 +1558,12 @@ namespace plugins_deepplayer
             }
         }
 
+        /// <summary>
+        /// Method to load ONNX model from specific path. 
+        /// Establishes new inference session object. 
+        /// Also disables the graph optimization since it caused issues with some GRU/LSTM models
+        /// </summary>
+        /// <param name="pth">Path to ONNX file</param>
         private void LoadONNModel(string pth)
         {
             specMess = -1;
@@ -1433,7 +1588,11 @@ namespace plugins_deepplayer
                 specMess =2;
 
                 if (rbGPU.Checked)
-                    infs = new InferenceSession(pth, SessionOptions.MakeSessionOptionWithCudaProvider(gpuDeviceId));
+                {
+                    SessionOptions sopt = SessionOptions.MakeSessionOptionWithCudaProvider(gpuDeviceId);
+                    sopt.GraphOptimizationLevel = GraphOptimizationLevel.ORT_DISABLE_ALL;
+                    infs = new InferenceSession(pth,sopt);
+                }
 
                 specMess = 3;
 
@@ -1454,17 +1613,24 @@ namespace plugins_deepplayer
 
         }
 
-        private void label8_Click(object sender, EventArgs e)
-        {
 
-        }
-
+        /// <summary>
+        /// Event called when a user chnages overlap settings for inference windows
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void nudOverLap_ValueChanged(object sender, EventArgs e)
         {
             //RefreshMetadata();
-            btPrev.PerformClick();
+            if (chbUpdateAuto.Checked)
+                btPrev.PerformClick();
         }
 
+        /// <summary>
+        /// Event called when a user/SP wants a refresh
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void button2_Click(object sender, EventArgs e)
         {
             //pbx.Refresh();
@@ -1482,6 +1648,11 @@ namespace plugins_deepplayer
             //    bgwPrev.CancelAsync();
         }
 
+        /// <summary>
+        /// Method providing a preview 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void bgwPrev_DoWork(object sender, DoWorkEventArgs e)
         {
             if (infs == null || linkedChannels.Count==0)
@@ -1637,7 +1808,7 @@ namespace plugins_deepplayer
                         ptimes.Add(sw.ElapsedMilliseconds);
 
                         //Console.WriteLine("Inference done");
-                        var tns = output.First().AsTensor<float>();
+                        var tns = output.ElementAt(currentOutputHead).AsTensor<float>(); //intially First()
 
                         float[] arr = tns.ToArray<float>();
 
@@ -1652,6 +1823,8 @@ namespace plugins_deepplayer
                         if (tns.Dimensions.Length == 3)
                             numSamples = tns.Dimensions[2];
 
+                        //TODO: if numSamples != input.length => rescalovat! Ale jak přesně? 3000 => 94
+                        //here!
                         for (int c = 0; c < numOutputChannels; c++)
                         {
                             float[] locArr = new float[numSamples];
@@ -1667,6 +1840,28 @@ namespace plugins_deepplayer
                             }
                             else
                                 Array.Copy(arr, startPos, locArr, 0, locArr.Length);
+
+                            //when DL model output is shorter then signal
+                            if (numSamples > numOutputChannels && numSamples < signal.Length)
+                            {
+                                float rat = signal.Length / (float)numSamples;
+                                int addSamples = (int)(rat + 1);
+
+                                float[] backArr = (float[])locArr.Clone();
+
+                                locArr = new float[ws];
+                                
+                                for (int s = 0; s < backArr.Length; s++)
+                                    for (int a=0;a<=addSamples;a++)
+                                    {
+                                        int realPos = (int)(s * rat)+a;
+                                        if (realPos < ws)
+                                            locArr[realPos] = backArr[s];
+                                    }
+                                    
+
+
+                            }
 
                             outProbsLocal.Add(locArr);
                         }
@@ -1726,13 +1921,15 @@ namespace plugins_deepplayer
 
                 if (chbSoftMax.Checked)
                 {
-                    float[] prbs = new float[outProbsPreview.Count];
-                    float sumPrbs = 0;
+                    double[] prbs = new double[outProbsPreview.Count];
+                    double sumPrbs = 0;
 
                     for (int x = 0; x < outProbsPreview[0].Count; x++)
                     {
+
+
                         for (int o = 0; o < outProbsPreview.Count; o++)
-                            prbs[o] = (float) Math.Exp(outProbsPreview[o][x]);
+                            prbs[o] = Math.Exp(outProbsPreview[o][x]);
 
                         sumPrbs = prbs.Sum();
 
@@ -1790,36 +1987,72 @@ namespace plugins_deepplayer
 
         }
 
+        /// <summary>
+        /// Event occurs when a user changes display settings
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void rbFitOrig_CheckedChanged(object sender, EventArgs e)
         {
             pbx.Refresh();
         }
 
+        /// <summary>
+        /// Event occurs when a user changes display settings
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void rbFitRes_CheckedChanged(object sender, EventArgs e)
         {
             pbx.Refresh();
         }
 
+        /// <summary>
+        /// Event occurs when a user changes display settings
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void rbFitAll_CheckedChanged(object sender, EventArgs e)
         {
             pbx.Refresh();
         }
 
+        /// <summary>
+        /// Event occurs when a user changes display settings
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void rbFitBoth_CheckedChanged(object sender, EventArgs e)
         {
             pbx.Refresh();
         }
 
+        /// <summary>
+        /// Event occurs when a user resize the plugin window => the plugin control is also resized since its docked inside.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void SVP_DEEP_Resize(object sender, EventArgs e)
         {
             pbx.Refresh();
         }
 
+        /// <summary>
+        /// Event occurs when a user changes inference window size
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void nudWS_ValueChanged(object sender, EventArgs e)
         {
-            btPrev.PerformClick();
+            if (chbUpdateAuto.Checked) 
+                btPrev.PerformClick();
         }
 
+        /// <summary>
+        /// Event is called when the preview worker finish its work
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void bgwPrev_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             if (wantFreshRefresh)
@@ -1831,21 +2064,44 @@ namespace plugins_deepplayer
             pbx.Refresh();
         }
 
+        /// <summary>
+        /// Radiobutton event when a user selects separate or single output from a model to export
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void rbOutSeparated_CheckedChanged(object sender, EventArgs e)
         {
-            btPrev.PerformClick();
+            if (chbUpdateAuto.Checked)
+                btPrev.PerformClick();
         }
 
+        /// <summary>
+        /// Event when a user changes output settings (only index of max. prob. output)
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void rbOutMax_CheckedChanged(object sender, EventArgs e)
         {
-            btPrev.PerformClick();
+            if (chbUpdateAuto.Checked)
+                btPrev.PerformClick();
         }
 
+        /// <summary>
+        /// This is called when a user changes pre-processing to none
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void rbPreprocNone_CheckedChanged(object sender, EventArgs e)
         {
-            btPrev.PerformClick();
+            if (chbUpdateAuto.Checked)
+                btPrev.PerformClick();
         }
 
+        /// <summary>
+        /// This is called when a user changes pre-processing to standardization
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void rbPreprocSTD_CheckedChanged(object sender, EventArgs e)
         {
             chbDeSTD.Enabled = rbPreprocSTD.Checked;
@@ -1853,40 +2109,79 @@ namespace plugins_deepplayer
             if (!rbPreprocSTD.Checked)
                 chbDeSTD.Checked = false;
 
-            btPrev.PerformClick();
+            if (chbUpdateAuto.Checked)
+                btPrev.PerformClick();
         }
 
+        /// <summary>
+        /// This is called when a user changes pre-processing to 0-1 normalization 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void rbPreprocNorm_CheckedChanged(object sender, EventArgs e)
         {
-            btPrev.PerformClick();
+            if (chbUpdateAuto.Checked)
+                btPrev.PerformClick();
         }
 
+        /// <summary>
+        /// This is called when a user want to apply sigmoid to the ouptput
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void chbDoSigm_CheckedChanged(object sender, EventArgs e)
         {
-            btPrev.PerformClick();
+            if (chbUpdateAuto.Checked)
+                btPrev.PerformClick();
         }
 
+        /// <summary>
+        /// This is called when a user changes output display to draw multiple outputs over themselfs
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void chbDrawOver_CheckedChanged(object sender, EventArgs e)
         {
             pbx.Refresh();
         }
 
+        /// <summary>
+        /// Event called when a preview worker needs to report a progress to the user
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void bgwPrev_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
             prevPercDone = e.ProgressPercentage;
             pbx.Refresh();
         }
 
+        /// <summary>
+        /// Called when a user switches from GPU to CPU inference
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void rbCPU_CheckedChanged(object sender, EventArgs e)
         {
             loadONNX(model_filename);
         }
 
+        /// <summary>
+        /// Called when a model needs to be loaded (async process inside also establishes a new inference session)
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void modelLoader_DoWork(object sender, DoWorkEventArgs e)
         {
             LoadONNModel(model_filename);
         }
 
+
+        /// <summary>
+        /// Occurs when a model is loaded and new inference session is created
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void modelLoader_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             if (loadingError == null)
@@ -1904,37 +2199,65 @@ namespace plugins_deepplayer
                 pbx.Refresh();
         }
 
-        private void pbx_ParentChanged(object sender, EventArgs e)
-        {
 
-        }
-
+        /// <summary>
+        /// Occurs when a user switch from CPU to GPU inference => new session with GPU support nust be created
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void rbGPU_CheckedChanged(object sender, EventArgs e)
         {
             loadONNX(model_filename);
         }
 
+        /// <summary>
+        /// Occurs when a user needs to draw inference windows borders
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void chbDrawWinBorders_CheckedChanged(object sender, EventArgs e)
         {
             pbx.Refresh();
         }
 
+        /// <summary>
+        /// Occurs when a user switch using a metada for model output channels
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void chbUM_CheckedChanged(object sender, EventArgs e)
         {
             LBCrefresh();
             pbx.Refresh();
         }
 
+        /// <summary>
+        /// Occurs when a user switch a SoftMax for preprocessing
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void chbSoftMax_CheckedChanged(object sender, EventArgs e)
         {
-            btPrev.PerformClick();
+            if (chbUpdateAuto.Checked)
+                btPrev.PerformClick();
         }
 
+
+        /// <summary>
+        /// Occurs when a user changes display mode for outputs:curves or fills
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void rbCurves_CheckedChanged(object sender, EventArgs e)
         {
             pbx.Refresh();
         }
 
+        /// <summary>
+        /// Occurs when a user release a key while typing inside a textbox to define prescriptor for model outputs.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void tbChannelBaseName_KeyUp(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Enter)
@@ -1944,6 +2267,9 @@ namespace plugins_deepplayer
             }
         }
 
+        /// <summary>
+        /// Refreshes names in the visible output selector
+        /// </summary>
         private void LBCrefresh()
         {
             
@@ -1970,16 +2296,30 @@ namespace plugins_deepplayer
             }
         }
 
+        /// <summary>
+        /// Occurs when a user changes a use of de-standardization in regression tasks 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void chbDeSTD_CheckedChanged(object sender, EventArgs e)
         {
-            btPrev.PerformClick();
+            if (chbUpdateAuto.Checked)
+                btPrev.PerformClick();
         }
 
+        /// <summary>
+        /// Occurs when a user change selection of output channels to display
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void lbChannelUsage_SelectedValueChanged(object sender, EventArgs e)
         {
             refreshSelectedCount();
         }
 
+        /// <summary>
+        /// Refreshes information about selected outputs
+        /// </summary>
         private void refreshSelectedCount()
         {
             int cnt = lbChannelUsage.SelectedItems.Count;
@@ -1993,6 +2333,47 @@ namespace plugins_deepplayer
             else
             lbSO.Text = "Selected outputs: " + cnt + "/" + numOutputChannels;
             pbx.Refresh();
+        }
+
+        /// <summary>
+        /// Occurs when user moves to lower output head (to the left)
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btHeadLeft_Click(object sender, EventArgs e)
+        {
+            int oldCOH = currentOutputHead;
+            currentOutputHead--;
+            if (currentOutputHead < 0)
+                currentOutputHead = 0;
+
+            if (oldCOH != currentOutputHead)
+            {
+                RefreshMetadata();
+                btPrev.PerformClick();
+            }
+        }
+
+        /// <summary>
+        /// Occurs when a user moves to the higher output head (to the right)
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btHeadRight_Click(object sender, EventArgs e)
+        {
+            if (infs == null)
+                return;
+
+            int oldCOH = currentOutputHead;
+            currentOutputHead++;
+            if (currentOutputHead >= infs.OutputMetadata.Count)
+                currentOutputHead = infs.OutputMetadata.Count - 1;
+
+            if (oldCOH != currentOutputHead)
+            {
+                RefreshMetadata();
+                btPrev.PerformClick();
+            }
         }
     }
 }

@@ -38,6 +38,8 @@
             this.tbChannelBaseName = new System.Windows.Forms.TextBox();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.ampg = new System.Windows.Forms.TabPage();
+            this.btHeadRight = new System.Windows.Forms.Button();
+            this.btHeadLeft = new System.Windows.Forms.Button();
             this.lmDesc = new System.Windows.Forms.TextBox();
             this.lbPrefSamp = new System.Windows.Forms.Label();
             this.lbf = new System.Windows.Forms.Label();
@@ -138,7 +140,6 @@
             this.topPanel.Name = "topPanel";
             this.topPanel.Size = new System.Drawing.Size(1107, 223);
             this.topPanel.TabIndex = 1;
-            this.topPanel.Paint += new System.Windows.Forms.PaintEventHandler(this.topPanel_Paint);
             // 
             // groupBox3
             // 
@@ -219,6 +220,8 @@
             // ampg
             // 
             this.ampg.BackColor = System.Drawing.SystemColors.Control;
+            this.ampg.Controls.Add(this.btHeadRight);
+            this.ampg.Controls.Add(this.btHeadLeft);
             this.ampg.Controls.Add(this.lmDesc);
             this.ampg.Controls.Add(this.lbPrefSamp);
             this.ampg.Controls.Add(this.lbf);
@@ -246,6 +249,28 @@
             this.ampg.Size = new System.Drawing.Size(496, 129);
             this.ampg.TabIndex = 0;
             this.ampg.Text = "A model (input/output)";
+            // 
+            // btHeadRight
+            // 
+            this.btHeadRight.Location = new System.Drawing.Point(189, 75);
+            this.btHeadRight.Name = "btHeadRight";
+            this.btHeadRight.Size = new System.Drawing.Size(23, 23);
+            this.btHeadRight.TabIndex = 36;
+            this.btHeadRight.Text = ">";
+            this.btHeadRight.UseVisualStyleBackColor = true;
+            this.btHeadRight.Visible = false;
+            this.btHeadRight.Click += new System.EventHandler(this.btHeadRight_Click);
+            // 
+            // btHeadLeft
+            // 
+            this.btHeadLeft.Location = new System.Drawing.Point(164, 75);
+            this.btHeadLeft.Name = "btHeadLeft";
+            this.btHeadLeft.Size = new System.Drawing.Size(23, 23);
+            this.btHeadLeft.TabIndex = 35;
+            this.btHeadLeft.Text = "<";
+            this.btHeadLeft.UseVisualStyleBackColor = true;
+            this.btHeadLeft.Visible = false;
+            this.btHeadLeft.Click += new System.EventHandler(this.btHeadLeft_Click);
             // 
             // lmDesc
             // 
@@ -299,7 +324,7 @@
             // lmgd
             // 
             this.lmgd.AutoSize = true;
-            this.lmgd.Location = new System.Drawing.Point(263, 105);
+            this.lmgd.Location = new System.Drawing.Point(293, 105);
             this.lmgd.Name = "lmgd";
             this.lmgd.Size = new System.Drawing.Size(16, 13);
             this.lmgd.TabIndex = 30;
@@ -345,7 +370,7 @@
             // label9
             // 
             this.label9.AutoSize = true;
-            this.label9.Location = new System.Drawing.Point(167, 105);
+            this.label9.Location = new System.Drawing.Point(197, 105);
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(93, 13);
             this.label9.TabIndex = 29;
@@ -376,7 +401,7 @@
             // lmgn
             // 
             this.lmgn.AutoSize = true;
-            this.lmgn.Location = new System.Drawing.Point(263, 90);
+            this.lmgn.Location = new System.Drawing.Point(293, 90);
             this.lmgn.Name = "lmgn";
             this.lmgn.Size = new System.Drawing.Size(16, 13);
             this.lmgn.TabIndex = 28;
@@ -394,7 +419,7 @@
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(192, 90);
+            this.label6.Location = new System.Drawing.Point(222, 90);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(68, 13);
             this.label6.TabIndex = 27;
@@ -412,7 +437,7 @@
             // lmprod
             // 
             this.lmprod.AutoSize = true;
-            this.lmprod.Location = new System.Drawing.Point(263, 75);
+            this.lmprod.Location = new System.Drawing.Point(293, 75);
             this.lmprod.Name = "lmprod";
             this.lmprod.Size = new System.Drawing.Size(16, 13);
             this.lmprod.TabIndex = 26;
@@ -430,7 +455,7 @@
             // label7
             // 
             this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(207, 75);
+            this.label7.Location = new System.Drawing.Point(237, 75);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(53, 13);
             this.label7.TabIndex = 25;
@@ -439,7 +464,7 @@
             // lmdom
             // 
             this.lmdom.AutoSize = true;
-            this.lmdom.Location = new System.Drawing.Point(263, 59);
+            this.lmdom.Location = new System.Drawing.Point(293, 59);
             this.lmdom.Name = "lmdom";
             this.lmdom.Size = new System.Drawing.Size(16, 13);
             this.lmdom.TabIndex = 24;
@@ -448,7 +473,7 @@
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(214, 59);
+            this.label5.Location = new System.Drawing.Point(244, 59);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(46, 13);
             this.label5.TabIndex = 23;
@@ -724,7 +749,6 @@
             this.label8.Size = new System.Drawing.Size(44, 13);
             this.label8.TabIndex = 4;
             this.label8.Text = "Overlap";
-            this.label8.Click += new System.EventHandler(this.label8_Click);
             // 
             // nudWS
             // 
@@ -809,7 +833,6 @@
             this.pbx.TabIndex = 4;
             this.pbx.TabStop = false;
             this.pbx.Paint += new System.Windows.Forms.PaintEventHandler(this.pbx_Paint);
-            this.pbx.ParentChanged += new System.EventHandler(this.pbx_ParentChanged);
             // 
             // bgw
             // 
@@ -940,5 +963,7 @@
         private System.Windows.Forms.ListBox lbChannelUsage;
         private System.Windows.Forms.GroupBox groupBox3;
         private System.Windows.Forms.Label lbSO;
+        private System.Windows.Forms.Button btHeadRight;
+        private System.Windows.Forms.Button btHeadLeft;
     }
 }
